@@ -49,7 +49,7 @@ def parse_handwriting(recipeName: str) -> Union[str | None]:
 	recipeName = recipeName.replace("_", " ")
 	recipeName = re.sub(r'[^a-zA-Z\s]', '', recipeName)
 	recipeName = recipeName.title()
-	if (len(recipeName) > 0):
+	if len(recipeName) > 0:
 		return recipeName
 	return None
 
@@ -61,19 +61,21 @@ def create_entry():
 	global cookbook
 	data = request.get_json()
 	# Cookbook is list
-	if (cookbook == None):
+	if cookbook == None:
 		cookbook = []
 	else:
 		if (any(d['name'] == data.get('name') for d in cookbook)):
 			return {}, 400
 
 	# Check type correct
-	if (data.get('type') != 'ingredient' and data.get('type') != 'recipe'):
+	if data.get('type') != 'ingredient' and data.get('type') != 'recipe':
 		return {}, 400
 	# Check cook time if ingredient
-	if (data.get('type') == 'ingredient'):
+	if data.get('type') == 'ingredient':
 		if (data.get('cookTime') < 0):
 			return {}, 400
+		
+	# TODO: Check requiredItem if recipe
 	
 	cookbook.append(data)
 
@@ -85,6 +87,17 @@ def create_entry():
 @app.route('/summary', methods=['GET'])
 def summary():
 	# TODO: implement me
+	name = request.args.get('name')
+	found = False
+	for d in cookbook:
+		if d['name'] == name and d['type'] == 'recipe':
+			recipe = d
+			found = True
+	
+	if not found:
+		return 400
+
+
 	return 'not implemented', 500
 
 

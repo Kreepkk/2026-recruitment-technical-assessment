@@ -75,7 +75,14 @@ def create_entry():
 		if (data.get('cookTime') < 0):
 			return {}, 400
 		
-	# TODO: Check requiredItem if recipe
+	# Check requiredItem if recipe
+	if data.get('type') == 'recipe':
+		item_names = []
+		for item in data.get('requiredItems'):
+			item_names.append(item.get('name'))
+		if len(item_names) != len(set(item_names)):
+			return {}, 400
+ 
 	
 	cookbook.append(data)
 
@@ -87,6 +94,9 @@ def create_entry():
 @app.route('/summary', methods=['GET'])
 def summary():
 	# TODO: implement me
+	# Check if cookbook empty
+	if (cookbook == None or cookbook == {}):
+		return {}, 400
 	name = request.args.get('name')
 	found = False
 	for d in cookbook:
@@ -95,8 +105,7 @@ def summary():
 			found = True
 	
 	if not found:
-		return 400
-
+		return {}, 400
 
 	return 'not implemented', 500
 

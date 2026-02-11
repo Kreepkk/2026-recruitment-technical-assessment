@@ -97,18 +97,34 @@ def summary():
 	# Check if cookbook empty
 	if (cookbook == None or cookbook == {}):
 		return {}, 400
+	
 	name = request.args.get('name')
 	found = False
 	for d in cookbook:
 		if d['name'] == name and d['type'] == 'recipe':
 			recipe = d
 			found = True
-	
 	if not found:
 		return {}, 400
+	
+	summary = {}
+	summary['name'] = name
+	summary['ingredients'] = []
+	summary['cookTime'] = 0
 
-	return 'not implemented', 500
+	# Looping through required items in cookbook
+	for item in recipe.get('requiredItems'):
+		if not any(d['name'] == item.get('name') for d in cookbook):
+			return {}, 400
+		# is a recipe
+		elif any(d['name'] == item.get('name') and d['type'] == 'recipe' for d in cookbook):
+			# TODO:
+			print("todo")
+		# is an ingredient (check if exists, then append to quantity and append name if not)
+		else:
+			print("todo")
 
+	return summary, 200
 
 # =============================================================================
 # ==== DO NOT TOUCH ===========================================================

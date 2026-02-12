@@ -126,14 +126,6 @@ def summary():
 
 	return res, 200
 
-# Check if item is an ingredient or recipe, returns respective strings:
-# if does not exist, returns None
-def getType(name: str) -> Union[str | None]:
-	for d in cookbook:
-		if d['name'] == name:
-			return d['type']
-	return None
-
 # Get the cookTime of an ingredient, assumes that name given is an ingredient
 # returns none if not exist
 def getCookTime(name: int):
@@ -176,7 +168,7 @@ def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
 			name = ingredient['name']
 			quant = ingredient['quantity']
 			result[name] = result.get(name, 0) + quant
-			
+
 	# Use the list of name:quantity pair and convert to list	
 	for name, quant in result.items():
 		base_ing.append({'name': name, 'quantity': quant})

@@ -111,13 +111,16 @@ def summary():
 	res['name'] = name
 	res['ingredients'] = []
 	res['cookTime'] = 0
-
+	
+	# Get all base ingredients
 	found_all = True
 	res['ingredients'], found_all = getbaseIngredients(name, found_all)
 
+	# If there was a required item not found in cookbook
 	if not found_all:
 		return {}, 400
 
+	# get total cookTime
 	for ingredient in res['ingredients']:
 		res['cookTime'] += ingredient.get('quantity') * getCookTime(ingredient.get('name'))
 
@@ -131,38 +134,50 @@ def getType(name: str) -> Union[str | None]:
 			return d['type']
 	return None
 
+# Get the cookTime of an ingredient, assumes that name given is an ingredient
+# returns none if not exist
 def getCookTime(name: int):
 	for d in cookbook:
 		if d['name'] == name:
 			return d['cookTime']
 	return None
 
+# Recursive call to gain all base ingredients of an item
 def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
+	# Get item
 	item = None
 	for d in cookbook:
 		if d['name'] == item_name:
 			item = d
-	
+
+	# item does not exist in cookbook, set flag found_all to false
 	if item is None:
 		found_all = False
 		return [], found_all
 	
+	# item is ingredient, return it's name and quantity as a list
 	if item.get('type') == 'ingredient':
 		return [{'name': item_name, 'quantity': multiplier}], found_all
 	
+	# Item is recipe
+	# Initialise result [name: quantity, ...]
+	# Initialise base_ing -> list of base ingredients
 	result = {}
 	base_ing = []
 	for req_item in item.get('requiredItems'):
+		# Sub-items found during recursive call -> has list of base ingredient for that req_item
 		sub_ing, found_all = getbaseIngredients(
 			req_item.get('name'),
 			found_all,
 			multiplier*req_item.get('quantity', 1),
 			)
+		# Use sub_ing to get new added items in result
 		for ingredient in sub_ing:
 			name = ingredient['name']
 			quant = ingredient['quantity']
-			result[name] = result.get('name', 0) + quant
-		
+			result[name] = result.get(name, 0) + quant
+			
+	# Use the list of name:quantity pair and convert to list	
 	for name, quant in result.items():
 		base_ing.append({'name': name, 'quantity': quant})
 

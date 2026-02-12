@@ -93,12 +93,13 @@ def create_entry():
 # Endpoint that returns a summary of a recipe that corresponds to a query name
 @app.route('/summary', methods=['GET'])
 def summary():
-	# TODO: implement me
 	# Check if cookbook empty
 	if (cookbook == None or cookbook == {}):
 		return {}, 400
 	
 	name = request.args.get('name')
+
+	# get the recipe, if not exist return status 400
 	found = False
 	for d in cookbook:
 		if d['name'] == name and d['type'] == 'recipe':
@@ -107,24 +108,70 @@ def summary():
 	if not found:
 		return {}, 400
 	
-	summary = {}
-	summary['name'] = name
-	summary['ingredients'] = []
-	summary['cookTime'] = 0
+	# setting up summary 
+	res = {}
+	res['name'] = name
+	res['ingredients'] = []
+	res['cookTime'] = 0
 
-	# Looping through required items in cookbook
-	for item in recipe.get('requiredItems'):
-		if not any(d['name'] == item.get('name') for d in cookbook):
-			return {}, 400
-		# is a recipe
-		elif any(d['name'] == item.get('name') and d['type'] == 'recipe' for d in cookbook):
-			# TODO:
-			print("todo")
-		# is an ingredient (check if exists, then append to quantity and append name if not)
-		else:
-			print("todo")
+	found_all = True
+	res['ingredients'], found_all = getbaseIngredients(name, found_all)
 
-	return summary, 200
+	if not found_all:
+		return {}, 400
+
+	for ingredient in res['ingredients']:
+		res['cookTime'] += ingredient.get('quantity') * getCookTime(ingredient.get('name'))
+
+	return res, 200
+
+# Check if item is an ingredient or recipe, returns respective strings:
+# if does not exist, returns None
+def getType(name: str) -> Union[str | None]:
+	for d in cookbook:
+		if d['name'] == name:
+			return d['type']
+	return None
+
+def getCookTime(name: int):
+	for d in cookbook:
+		if d['name'] == name:
+			return d['cookTime']
+	return None
+
+def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
+	item = None
+	for d in cookbook:
+		if d['name'] == item_name:
+			item = d
+	
+	if item is None:
+		found_all = False
+		return [], found_all
+	
+	if item.get('type') == 'ingredient':
+		return [{'name': item_name, 'quantity': multiplier}], found_all
+	
+	result = {}
+	base_ing = []
+	for req_item in item.get('requiredItems'):
+		sub_ing, found_all = getbaseIngredients(
+			req_item.get('name'),
+			found_all,
+			multiplier*req_item.get('quantity', 1),
+			)
+		for ingredient in sub_ing:
+			name = ingredient['name']
+			quant = ingredient['quantity']
+			result[name] = result.get('name', 0) + quant
+		
+	for name, quant in result.items():
+		base_ing.append({'name': name, 'quantity': quant})
+
+	return base_ing, found_all
+
+
+
 
 # =============================================================================
 # ==== DO NOT TOUCH ===========================================================

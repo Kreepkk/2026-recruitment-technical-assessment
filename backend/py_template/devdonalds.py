@@ -99,11 +99,10 @@ def summary():
 	
 	name = request.args.get('name')
 
-	# get the recipe, if not exist return status 400
+	# Check if recipe, if not exist return status 400
 	found = False
 	for d in cookbook:
 		if d['name'] == name and d['type'] == 'recipe':
-			recipe = d
 			found = True
 	if not found:
 		return {}, 400

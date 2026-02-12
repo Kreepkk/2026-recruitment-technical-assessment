@@ -93,7 +93,7 @@ def create_entry():
 @app.route('/summary', methods=['GET'])
 def summary():
 	# Check if cookbook empty
-	if (cookbook == None):
+	if (cookbook == None or cookbook == []):
 		return {}, 400
 	
 	name = request.args.get('name')

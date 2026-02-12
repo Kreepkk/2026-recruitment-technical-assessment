@@ -43,7 +43,6 @@ def parse():
 # [TASK 1] ====================================================================
 # Takes in a recipeName and returns it in a form that 
 def parse_handwriting(recipeName: str) -> Union[str | None]:
-	# TODO: Return name if satisfies all without needing to modify after .strip()
 	recipeName = recipeName.strip()
 	recipeName = recipeName.replace("-", " ")
 	recipeName = recipeName.replace("_", " ")

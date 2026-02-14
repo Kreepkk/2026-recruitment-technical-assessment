@@ -159,7 +159,6 @@ def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
 	
 	# Item is recipe
 	# Initialise result [name: quantity, ...]
-	# Initialise base_ing -> list of base ingredients
 	result = {}
 	for req_item in item.required_items:
 		# Sub-items found during recursive call -> has list of base ingredient for that req_item

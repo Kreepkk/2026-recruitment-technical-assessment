@@ -63,27 +63,33 @@ def create_entry():
 	if cookbook == None:
 		cookbook = []
 	else:
-		if (any(d['name'] == data.get('name') for d in cookbook)):
+		if (any(d.name == data.get('name') for d in cookbook)): # Check names unique
 			return {}, 400
-
-	# Check type correct
-	if data.get('type') != 'ingredient' and data.get('type') != 'recipe':
-		return {}, 400
-	# Check cook time if ingredient
-	if data.get('type') == 'ingredient':
+	if data.get('type') == 'ingredient':			# ingredients check and entry
 		if (data.get('cookTime') < 0):
 			return {}, 400
+		else:
+			entry = Ingredient(
+				name=data.get('name'),
+				cook_time=data.get('cookTime')
+			)
+	elif data.get('type') == 'recipe':			# recipe check and entry
+		# Check if all item names are unique
+		items = [RequiredItem(name=item.get('name'), quantity=item.get('quantity')) 
+		   			for item in data.get('requiredItems', [])]
 		
-	# Check requiredItem if recipe
-	if data.get('type') == 'recipe':
-		item_names = []
-		for item in data.get('requiredItems'):
-			item_names.append(item.get('name'))
+		item_names = [item.name for item in items]
 		if len(item_names) != len(set(item_names)):
 			return {}, 400
+		entry = Recipe(
+			name=data.get('name'),
+			required_items=items
+		)
+	else:
+		return {}, 400			# Case where it's type is not ingredient nor recipe
  
 	
-	cookbook.append(data)
+	cookbook.append(entry)
 
 	return {}, 200
 
@@ -101,7 +107,7 @@ def summary():
 	# Check if recipe, if not exist return status 400
 	found = False
 	for d in cookbook:
-		if d['name'] == name and d['type'] == 'recipe':
+		if d.name == name and isinstance(d, Recipe):
 			found = True
 	if not found:
 		return {}, 400
@@ -130,8 +136,8 @@ def summary():
 # returns none if not exist
 def getCookTime(name: int):
 	for d in cookbook:
-		if d['name'] == name:
-			return d['cookTime']
+		if d.name == name:
+			return d.cook_time
 	return None
 
 # Recursive call to gain all base ingredients of an item
@@ -139,7 +145,7 @@ def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
 	# Get item
 	item = None
 	for d in cookbook:
-		if d['name'] == item_name:
+		if d.name == item_name:
 			item = d
 
 	# item does not exist in cookbook, set flag found_all to false
@@ -148,20 +154,19 @@ def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
 		return [], found_all
 	
 	# item is ingredient, return it's name and quantity as a list
-	if item.get('type') == 'ingredient':
+	if isinstance(item, Ingredient):
 		return [{'name': item_name, 'quantity': multiplier}], found_all
 	
 	# Item is recipe
 	# Initialise result [name: quantity, ...]
 	# Initialise base_ing -> list of base ingredients
 	result = {}
-	base_ing = []
-	for req_item in item.get('requiredItems'):
+	for req_item in item.required_items:
 		# Sub-items found during recursive call -> has list of base ingredient for that req_item
 		sub_ing, found_all = getbaseIngredients(
-			req_item.get('name'),
+			req_item.name,
 			found_all,
-			multiplier*req_item.get('quantity', 1),
+			multiplier*req_item.quantity,
 			)
 		# Use sub_ing to get new added items in result
 		for ingredient in sub_ing:
@@ -169,11 +174,7 @@ def getbaseIngredients(item_name: str, found_all: bool, multiplier=1):
 			quant = ingredient['quantity']
 			result[name] = result.get(name, 0) + quant
 
-	# Use the list of name:quantity pair and convert to list	
-	for name, quant in result.items():
-		base_ing.append({'name': name, 'quantity': quant})
-
-	return base_ing, found_all
+	return [{'name': name, 'quantity': quantity} for name, quantity in result.items()], found_all
 
 
 
